@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-06-19T17:37:31.517509",
+  "timestamp": "2026-06-19T19:18:49.170946",
   "tests": [
     {
       "id": 1,
@@ -16,15 +16,16 @@
     {
       "id": 2,
       "name": "Answer Question",
-      "status": "failed",
-      "error": "'cp950' codec can't encode character '\\u2081' in position 349: illegal multibyte sequence"
+      "status": "passed",
+      "question": "Based on the PDF, explain the differences between sparse MoE and dense MoE architectures.",
+      "answer_preview": "Based on the document, here is a detailed explanation of the differences between sparse MoE and dense MoE architectures:\n\n## Dense MoE\n\n**Core Mechanism:**\nThe dense mixture-of-experts layer **activat..."
     },
     {
       "id": 3,
       "name": "Generate Summary PDF",
       "status": "passed",
-      "output_file": "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\skills\\pdf-text-extractor\\test_output\\Summary_of_A_Survey_on_Mixture_of_Experts.pdf",
-      "file_size": 5177
+      "output_file": "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\Claude-Skills\\pdf-text-extractor\\test_output\\Summary_of_A_Survey_on_Mixture_of_Experts.pdf",
+      "file_size": 4994
     }
   ]
 }

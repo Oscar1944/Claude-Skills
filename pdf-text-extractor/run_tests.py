@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Test runner for pdf-text-extractor skill
 """
@@ -8,6 +9,12 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
+import io
+
+# Set UTF-8 encoding for output
+if sys.platform == "win32":
+    import codecs
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent / "scripts"))
@@ -108,14 +115,24 @@ def run_tests():
     try:
         print(f"Question: {question}\n")
         answer = analyze_and_answer(pdf_path, question)
-        print(f"Answer:\n{answer}\n")
+
+        # Handle encoding issues with special characters
+        try:
+            print(f"Answer:\n{answer[:500]}\n")
+        except UnicodeEncodeError:
+            # If there are encoding issues, save to file instead
+            answer_file = Path(__file__).parent / "test_output" / "answer_output.txt"
+            answer_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(answer_file, 'w', encoding='utf-8') as f:
+                f.write(answer)
+            print(f"[Note] Answer saved to file due to encoding: {answer_file}\n")
 
         results["tests"].append({
             "id": 2,
             "name": "Answer Question",
             "status": "passed",
             "question": question,
-            "answer": answer[:200] + "..." if len(answer) > 200 else answer
+            "answer_preview": answer[:200] + "..." if len(answer) > 200 else answer
         })
         print("[PASS] TEST 2 PASSED\n")
     except Exception as e:
