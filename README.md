@@ -99,9 +99,33 @@ pip install -r requirements.txt
 
 ### ⚙️ 配置
 
-設置環境變數：
-```bash
+#### 環境變數：ANTHROPIC_API_KEY
+
+API Key 必須通過環境變數設置，**不要硬編碼**在代碼中。
+
+**PowerShell (Windows)**：
+```powershell
 $env:ANTHROPIC_API_KEY = "your-api-key-here"
+```
+
+**Bash/Zsh (Linux/Mac)**：
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+**驗證設置**：
+```bash
+# PowerShell
+$env:ANTHROPIC_API_KEY
+
+# Bash
+echo $ANTHROPIC_API_KEY
+```
+
+如果沒有設置 API Key，運行測試時會看到：
+```
+[ERROR] ANTHROPIC_API_KEY environment variable not set
+Please set: $env:ANTHROPIC_API_KEY = 'your-api-key-here'
 ```
 
 ---
@@ -191,36 +215,114 @@ pip install -r requirements.txt
 
 ### ⚙️ 配置
 
-設置環境變數：
-```bash
+#### 環境變數：ANTHROPIC_API_KEY
+
+API Key 必須通過環境變數設置，**不要硬編碼**在代碼中。
+
+**PowerShell (Windows)**：
+```powershell
 $env:ANTHROPIC_API_KEY = "your-api-key-here"
+```
+
+**Bash/Zsh (Linux/Mac)**：
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+**驗證設置**：
+```bash
+# PowerShell
+$env:ANTHROPIC_API_KEY
+
+# Bash
+echo $ANTHROPIC_API_KEY
+```
+
+如果沒有設置 API Key，運行測試時會看到：
+```
+[ERROR] ANTHROPIC_API_KEY environment variable not set
+Please set: $env:ANTHROPIC_API_KEY = 'your-api-key-here'
 ```
 
 ---
 
 ## 🧪 運行測試
 
+### 前置要求
+
+設置 API Key 環境變數：
+
+**PowerShell**：
+```powershell
+$env:ANTHROPIC_API_KEY = "your-api-key-here"
+```
+
+**Bash/Linux/Mac**：
+```bash
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
 ### 運行 pdf-text-extractor 測試
 
+#### 方式 1：命令行提供文件路徑（推薦）
+```bash
+cd pdf-text-extractor
+python run_tests.py "/path/to/your/document.pdf"
+```
+
+#### 方式 2：交互式輸入（無命令行參數）
 ```bash
 cd pdf-text-extractor
 python run_tests.py
+# 程式將提示：Please provide the path to a PDF file:
+# 輸入完整的 PDF 文件路徑
 ```
 
 **測試輸出位置**：
 - 測試結果：`test_results.json`
-- 生成的 PDF：`test_output/Summary_of_A_Survey_on_Mixture_of_Experts.pdf`
+- 生成的 PDF：`test_output/Summary_of_*.pdf`
 
 ### 運行 pptx-content-extractor 測試
 
+#### 方式 1：命令行提供文件路徑（推薦）
+```bash
+cd pptx-content-extractor
+python run_tests.py "/path/to/your/presentation.pptx"
+```
+
+#### 方式 2：交互式輸入（無命令行參數）
 ```bash
 cd pptx-content-extractor
 python run_tests.py
+# 程式將提示：Please provide the path to a PPTX file:
+# 輸入完整的 PPTX 文件路徑
 ```
 
 **測試輸出位置**：
 - 測試結果：`test_results.json`
-- 生成的 PPTX：`test_output/Summary_of_Selling_the_Premium_in_Freemium.pptx`
+- 生成的 PPTX：`test_output/Summary_of_*.pptx`
+
+### 📋 使用任意 PDF/PPTX 文件進行測試
+
+**重要**：這些 Skills 支持**任意符合格式的 PDF 和 PPTX 文件**，不僅限於提供的測試文件：
+
+```bash
+# 測試自己的 PDF
+cd pdf-text-extractor
+python run_tests.py "C:/Users/YourName/Documents/MyDocument.pdf"
+
+# 或
+python run_tests.py "/home/user/documents/report.pdf"
+
+# 測試自己的 PPTX
+cd pptx-content-extractor
+python run_tests.py "D:/Presentations/MyPresentation.pptx"
+```
+
+**文件要求**：
+- PDF：必須為 `.pdf` 格式
+- PPTX：必須為 `.pptx` 格式
+- 文件必須存在且可讀取
 
 ---
 

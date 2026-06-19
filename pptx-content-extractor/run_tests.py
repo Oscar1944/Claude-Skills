@@ -18,13 +18,51 @@ from extract_and_analyze import (
     generate_summary_pptx,
 )
 
+def get_pptx_path():
+    """Get PPTX file path from command line argument or user input."""
+    # Check for command line argument
+    if len(sys.argv) > 1:
+        pptx_path = sys.argv[1]
+        print(f"Using PPTX file from argument: {pptx_path}\n")
+    else:
+        # Prompt user for input
+        print("=" * 80)
+        print("PPTX Content Extractor - Test Suite")
+        print("=" * 80)
+        print("\n[INPUT] Please provide the path to a PPTX file:")
+        pptx_path = input("PPTX file path: ").strip()
+        print()
+
+    # Validate file exists
+    pptx_file = Path(pptx_path)
+    if not pptx_file.exists():
+        print(f"[ERROR] File not found: {pptx_path}")
+        return None
+
+    # Validate file is a PPTX
+    if pptx_file.suffix.lower() != ".pptx":
+        print(f"[ERROR] Invalid file format. Expected .pptx, got {pptx_file.suffix}")
+        return None
+
+    return str(pptx_file.absolute())
+
+
 def run_tests():
     """Run all test cases for pptx-content-extractor"""
 
-    # Set API key
-    os.environ["ANTHROPIC_API_KEY"] = "YOUR_API_KEY_HERE"
+    # API key should be set via environment variable
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("[ERROR] ANTHROPIC_API_KEY environment variable not set")
+        print("Please set: $env:ANTHROPIC_API_KEY = 'your-api-key'")
+        print("\nExample:")
+        print("  PowerShell: $env:ANTHROPIC_API_KEY = 'your-api-key-here'")
+        print("  Bash:       export ANTHROPIC_API_KEY='your-api-key-here'")
+        return False
 
-    pptx_path = "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\Selling the Premium in Freemium.pptx"
+    # Get PPTX file path from user
+    pptx_path = get_pptx_path()
+    if pptx_path is None:
+        return False
 
     print("=" * 80)
     print("PPTX Content Extractor - Test Suite")

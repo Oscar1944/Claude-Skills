@@ -18,13 +18,51 @@ from extract_and_analyze import (
     generate_summary_pdf,
 )
 
+def get_pdf_path():
+    """Get PDF file path from command line argument or user input."""
+    # Check for command line argument
+    if len(sys.argv) > 1:
+        pdf_path = sys.argv[1]
+        print(f"Using PDF file from argument: {pdf_path}\n")
+    else:
+        # Prompt user for input
+        print("=" * 80)
+        print("PDF Text Extractor - Test Suite")
+        print("=" * 80)
+        print("\n[INPUT] Please provide the path to a PDF file:")
+        pdf_path = input("PDF file path: ").strip()
+        print()
+
+    # Validate file exists
+    pdf_file = Path(pdf_path)
+    if not pdf_file.exists():
+        print(f"[ERROR] File not found: {pdf_path}")
+        return None
+
+    # Validate file is a PDF
+    if pdf_file.suffix.lower() != ".pdf":
+        print(f"[ERROR] Invalid file format. Expected .pdf, got {pdf_file.suffix}")
+        return None
+
+    return str(pdf_file.absolute())
+
+
 def run_tests():
     """Run all test cases for pdf-text-extractor"""
 
-    # Set API key
-    os.environ["ANTHROPIC_API_KEY"] = "YOUR_API_KEY_HERE"
+    # API key should be set via environment variable
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("[ERROR] ANTHROPIC_API_KEY environment variable not set")
+        print("Please set: $env:ANTHROPIC_API_KEY = 'your-api-key'")
+        print("\nExample:")
+        print("  PowerShell: $env:ANTHROPIC_API_KEY = 'your-api-key-here'")
+        print("  Bash:       export ANTHROPIC_API_KEY='your-api-key-here'")
+        return False
 
-    pdf_path = "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\A Survey on Mixture of Experts.pdf"
+    # Get PDF file path from user
+    pdf_path = get_pdf_path()
+    if pdf_path is None:
+        return False
 
     print("=" * 80)
     print("PDF Text Extractor - Test Suite")
