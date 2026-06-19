@@ -1,0 +1,77 @@
+{
+  "skill_name": "pptx-content-extractor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Please read the PPTX file 'Selling the Premium in Freemium.pptx' and provide a comprehensive summary of the presentation. What are the main topics, key arguments, and key takeaways?",
+      "expected_output": "A detailed summary covering the freemium business model, its advantages/disadvantages, and strategic implications discussed in the presentation",
+      "files": ["Selling the Premium in Freemium.pptx"],
+      "assertions": [
+        {
+          "name": "contains_freemium_definition",
+          "description": "Summary includes clear explanation of the freemium model"
+        },
+        {
+          "name": "mentions_advantages",
+          "description": "Discusses advantages of the freemium approach"
+        },
+        {
+          "name": "mentions_challenges",
+          "description": "Mentions challenges or disadvantages of freemium"
+        },
+        {
+          "name": "response_length",
+          "description": "Summary is substantial (at least 300 words) and well-structured"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Based on the PPTX file 'Selling the Premium in Freemium.pptx', what are the key success factors or metrics for implementing a successful freemium business model? What does the presentation recommend?",
+      "expected_output": "A detailed answer explaining the success factors, strategies, and recommendations for freemium models as discussed in the presentation",
+      "files": ["Selling the Premium in Freemium.pptx"],
+      "assertions": [
+        {
+          "name": "identifies_success_factors",
+          "description": "Lists specific success factors mentioned in the presentation"
+        },
+        {
+          "name": "mentions_metrics",
+          "description": "Discusses key metrics or KPIs for freemium success"
+        },
+        {
+          "name": "cites_presentation_content",
+          "description": "References actual content and examples from the slides"
+        },
+        {
+          "name": "comprehensive_answer",
+          "description": "Provides a complete, well-reasoned response"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Extract the main points and key insights from 'Selling the Premium in Freemium.pptx' and generate a new PPTX presentation that summarizes these insights in a concise, well-formatted manner. The new presentation should be easy to reference and visually organized.",
+      "expected_output": "A newly generated PPTX file containing organized key insights and main points from the original presentation",
+      "files": ["Selling the Premium in Freemium.pptx"],
+      "assertions": [
+        {
+          "name": "pptx_generated",
+          "description": "A PPTX file is successfully generated"
+        },
+        {
+          "name": "contains_key_insights",
+          "description": "Generated presentation includes key insights from the original"
+        },
+        {
+          "name": "well_organized",
+          "description": "Slides are logically organized and easy to follow"
+        },
+        {
+          "name": "professional_format",
+          "description": "Generated PPTX looks professional and is easy to read"
+        }
+      ]
+    }
+  ]
+}

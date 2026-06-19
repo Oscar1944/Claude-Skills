@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-06-19T17:45:25.658588",
+  "tests": [
+    {
+      "id": 1,
+      "name": "Read and Extract",
+      "status": "passed",
+      "result": {
+        "status": "success",
+        "filename": "Selling the Premium in Freemium.pptx",
+        "slides": 40,
+        "content_length": 7713,
+        "first_slide_preview": "Journal of Marketing 2018\nSelling the Premium in Freemium\n               \u2014Xian Gu, P.K. Kannan and Liye Ma\n\u7b2c\u4e94\u7d44\n\u912d\u5fc3\u6109 111423020 \n\u67f3\u6210\u5f65 111423027 \n\u9673\u739f\u975c 111423031\n\u9673\u6620\u5f64 111423038 \n\u9673\u4f73\u8fb0 111423058\n\u674e\u6615\u7469 111423063\n\u8523\u9298"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Answer Question",
+      "status": "passed",
+      "question": "Based on the presentation, what are the key advantages and disadvantages of the freemium business model?",
+      "answer_preview": "# Key Advantages and Disadvantages of the Freemium Business Model\n\nBased on the presentation content, here is an analysis of the freemium model's advantages and disadvantages:\n\n## What is the Freemium..."
+    },
+    {
+      "id": 3,
+      "name": "Generate Summary PPTX",
+      "status": "passed",
+      "output_file": "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\skills\\pptx-content-extractor\\test_output\\Summary_of_Selling_the_Premium_in_Freemium.pptx",
+      "file_size": 38551
+    }
+  ]
+}
