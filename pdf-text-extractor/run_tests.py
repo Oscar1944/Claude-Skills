@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-API_URL = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+API_URL = os.getenv("PDF_EXTRACTION_API_URL", "https://claude-skill.zeabur.app")
 OUTPUT_DIR = Path(__file__).parent / "test_output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 

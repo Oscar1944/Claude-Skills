@@ -252,15 +252,35 @@ class PDFGenerator:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+    def _register_cjk_font(self):
+        """Try to register a CJK font for Chinese/Japanese/Korean support."""
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+
+        candidates = [
+            ("C:/Windows/Fonts/msyh.ttc", 0),
+            ("C:/Windows/Fonts/msjh.ttc", 0),
+            ("C:/Windows/Fonts/simsun.ttc", 0),
+            ("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc", 0),
+            ("/System/Library/Fonts/PingFang.ttc", 0),
+        ]
+        for font_path, idx in candidates:
+            if Path(font_path).exists():
+                try:
+                    pdfmetrics.registerFont(TTFont("CJK", font_path, subfontIndex=idx))
+                    return "CJK"
+                except Exception:
+                    continue
+        return None
+
     def generate_from_text(self, content: str, title: str = "Generated Document") -> str:
-        """Generate PDF from text content."""
+        """Generate PDF from text content with CJK font support."""
         try:
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import letter
             from reportlab.lib import colors
-            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+            from reportlab.lib.pagesizes import letter
             from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
             from reportlab.lib.units import inch
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 
             output_file = self.output_dir / f"{title.replace(' ', '_')}.pdf"
 
@@ -273,26 +293,32 @@ class PDFGenerator:
                 bottomMargin=18,
             )
 
+            cjk_font = self._register_cjk_font()
             styles = getSampleStyleSheet()
-            story = []
 
             title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=colors.HexColor('#1f4788'),
-                spaceAfter=30,
+                "CustomTitle",
+                parent=styles["Heading1"],
+                fontSize=20,
+                textColor=colors.HexColor("#1f4788"),
+                spaceAfter=20,
                 alignment=1,
+                fontName=cjk_font if cjk_font else "Helvetica-Bold",
+            )
+            body_style = ParagraphStyle(
+                "CustomBody",
+                parent=styles["Normal"],
+                fontSize=11,
+                leading=16,
+                fontName=cjk_font if cjk_font else "Helvetica",
             )
 
-            story.append(Paragraph(title, title_style))
-            story.append(Spacer(1, 0.3 * inch))
+            story = [Paragraph(title, title_style), Spacer(1, 0.2 * inch)]
 
-            paragraphs = content.split('\n\n')
-            for para in paragraphs:
+            for para in content.split("\n\n"):
                 if para.strip():
-                    story.append(Paragraph(para.strip(), styles['Normal']))
-                    story.append(Spacer(1, 0.2 * inch))
+                    story.append(Paragraph(para.strip().replace("\n", "<br/>"), body_style))
+                    story.append(Spacer(1, 0.15 * inch))
 
             doc.build(story)
             logger.info(f"PDF generated: {output_file}")

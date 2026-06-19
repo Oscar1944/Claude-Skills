@@ -151,6 +151,27 @@ Output:
 "Generated PDF: /output/key-takeaways.pdf (1.2 MB, 3 pages)"
 ```
 
+## Execution Rules
+
+When running Python code as part of this skill:
+
+1. **Do NOT write Python scripts to disk.** Execute all Python inline via PowerShell here-string:
+   ```powershell
+   $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+   $env:PYTHONUTF8 = '1'
+   @'
+   # python code here
+   '@ | python3
+   ```
+
+2. **Always set encoding before piping to Python** to prevent Chinese/special characters from becoming `????`:
+   ```powershell
+   $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+   $env:PYTHONUTF8 = '1'
+   ```
+
+3. **CJK font support** is built into `PDFGenerator` — Chinese/Japanese/Korean text will render correctly in generated PDFs automatically.
+
 ## Technical Details
 
 ### Supported PDF Features

@@ -153,6 +153,25 @@ Output:
 "Generated PPTX: /output/strategy-focus.pptx (2.5 MB, 8 slides)"
 ```
 
+## Execution Rules
+
+When running Python code as part of this skill:
+
+1. **Do NOT write Python scripts to disk.** Execute all Python inline via PowerShell here-string:
+   ```powershell
+   $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+   $env:PYTHONUTF8 = '1'
+   @'
+   # python code here
+   '@ | python3
+   ```
+
+2. **Always set encoding before piping to Python** to prevent Chinese/special characters from becoming `????`:
+   ```powershell
+   $OutputEncoding = New-Object System.Text.UTF8Encoding $false
+   $env:PYTHONUTF8 = '1'
+   ```
+
 ## Technical Details
 
 ### Supported PPTX Features
