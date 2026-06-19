@@ -42,9 +42,8 @@ env/
 .env.local
 .env.*.local
 
-# Test outputs (keep test_results.json but ignore large output files)
-test_output/**/*.pdf
-test_output/**/*.pptx
+# Test outputs
+test_output/
 
 # Temporary files
 *.tmp

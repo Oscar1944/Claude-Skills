@@ -2,11 +2,13 @@
 """
 PPTX Content Extractor Skill
 Extracts content from PPTX presentations, answers questions about content, and generates new PPTX files.
+Uses FastAPI backend for file processing.
 """
 
 import os
 import sys
 import json
+import requests
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
@@ -26,66 +28,104 @@ except ImportError as e:
     sys.exit(1)
 
 
-class PPTXReader:
-    """Handles PPTX reading and content extraction."""
+class APIClient:
+    """Client for calling the FastAPI backend."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, api_url: str = None):
+        if api_url is None:
+            api_url = os.getenv("PPTX_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+        self.api_url = api_url
+        self.extract_endpoint = f"{api_url}/extract-pptx"
+
+    def extract_pptx(self, file_path: str) -> Dict:
+        """Extract PPTX content via API."""
+        try:
+            pptx_file = Path(file_path)
+            if not pptx_file.exists():
+                return {"status": "error", "message": f"File not found: {file_path}"}
+
+            if not pptx_file.suffix.lower() == ".pptx":
+                return {"status": "error", "message": "File must be a PPTX"}
+
+            with open(pptx_file, "rb") as f:
+                files = {"file": (pptx_file.name, f, "application/vnd.openxmlformats-officedocument.presentationml.presentation")}
+                response = requests.post(self.extract_endpoint, files=files, timeout=300)
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "status": "error",
+                    "message": f"API error: {response.status_code}",
+                    "detail": response.text
+                }
+        except requests.exceptions.ConnectionError:
+            return {
+                "status": "error",
+                "message": f"Cannot connect to API at {self.api_url}",
+                "hint": "Make sure the FastAPI server is running"
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def health_check(self) -> bool:
+        """Check if API is available."""
+        try:
+            response = requests.get(f"{self.api_url}/", timeout=5)
+            return response.status_code == 200
+        except:
+            return False
+
+
+class PPTXReader:
+    """Handles PPTX reading and content extraction via API."""
+
+    def __init__(self, file_path: str, api_url: str = None):
         """
         Initialize PPTX reader.
 
         Args:
             file_path: Path to PPTX file
+            api_url: URL of the FastAPI backend
         """
+        if api_url is None:
+            api_url = os.getenv("PPTX_EXTRACTION_API_URL", "http://127.0.0.1:8000")
         self.file_path = Path(file_path)
-        self.presentation = None
+        self.api_client = APIClient(api_url)
         self.slides_content = None
         self.metadata = None
+        self.api_response = None
 
     def read_pptx(self) -> Dict:
-        """Read PPTX and extract basic information."""
+        """Read PPTX and extract basic information via API."""
         try:
-            self.presentation = Presentation(self.file_path)
-            self.metadata = {
-                "filename": self.file_path.name,
-                "slides": len(self.presentation.slides),
-            }
-            self.slides_content = self.extract_slides()
-            return {
-                "status": "success",
-                "filename": self.file_path.name,
-                "slides": len(self.presentation.slides),
-                "content_length": sum(len(s.get("text", "")) for s in self.slides_content),
-            }
+            self.api_response = self.api_client.extract_pptx(str(self.file_path))
+
+            if self.api_response.get("status") == "success":
+                self.slides_content = self.api_response.get("slides_content", [])
+                self.metadata = {
+                    "filename": self.api_response.get("filename", ""),
+                    "slides": self.api_response.get("slides", 0),
+                }
+                return {
+                    "status": "success",
+                    "filename": self.api_response.get("filename", ""),
+                    "slides": self.api_response.get("slides", 0),
+                    "content_length": self.api_response.get("content_length", 0),
+                }
+            else:
+                error_msg = self.api_response.get("message", "Unknown error")
+                logger.error(f"Error reading PPTX: {error_msg}")
+                return {"status": "error", "message": error_msg}
         except Exception as e:
             logger.error(f"Error reading PPTX: {e}")
             return {"status": "error", "message": str(e)}
 
     def extract_slides(self) -> List[Dict]:
-        """Extract content from all slides."""
-        if self.presentation is None:
-            try:
-                self.presentation = Presentation(self.file_path)
-            except Exception as e:
-                logger.error(f"Error opening PPTX: {e}")
-                return []
-
-        slides_data = []
-        for slide_num, slide in enumerate(self.presentation.slides, 1):
-            slide_info = {"slide_number": slide_num, "text": "", "notes": ""}
-
-            text_parts = []
-            for shape in slide.shapes:
-                if hasattr(shape, "text") and shape.text:
-                    text_parts.append(shape.text)
-
-            slide_info["text"] = "\n".join(text_parts)
-
-            if slide.has_notes_slide:
-                slide_info["notes"] = slide.notes_slide.notes_text_frame.text
-
-            slides_data.append(slide_info)
-
-        return slides_data
+        """Get extracted slides content."""
+        if self.slides_content is None:
+            self.read_pptx()
+        return self.slides_content or []
 
     def extract_notes(self) -> List[str]:
         """Extract speaker notes from slides."""
@@ -292,20 +332,34 @@ class PPTXGenerator:
 # ============================================================================
 
 def read_and_extract(pptx_path: str) -> Dict:
-    """Read PPTX and extract content."""
+    """Read PPTX and extract content via API."""
     reader = PPTXReader(pptx_path)
     result = reader.read_pptx()
 
-    if result["status"] == "success":
-        preview = reader.slides_content[0]["text"][:200] if reader.slides_content else ""
+    if result.get("status") == "success" and reader.slides_content:
+        preview = reader.slides_content[0].get("text", "")[:200] if reader.slides_content else ""
         return {
             "status": "success",
-            "filename": result["filename"],
-            "slides": result["slides"],
-            "content_length": result["content_length"],
+            "filename": result.get("filename"),
+            "slides": result.get("slides"),
+            "content_length": result.get("content_length"),
             "first_slide_preview": preview + "..." if len(preview) > 200 else preview,
         }
-    return result
+    elif result.get("status") != "success":
+        return {
+            "status": "error",
+            "message": result.get("message", "Unknown error occurred"),
+            "filename": None,
+            "slides": None,
+            "content_length": None
+        }
+    else:
+        return {
+            "status": "error",
+            "message": "Failed to extract content from PPTX",
+            "filename": result.get("filename"),
+            "slides": result.get("slides")
+        }
 
 
 def analyze_and_answer(pptx_path: str, question: str) -> str:

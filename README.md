@@ -1,244 +1,122 @@
 # Claude Code Skills: Document Processing Suite
 
-兩個強大的 Claude Code Skills，用於智能處理和分析 PDF 和 PowerPoint 文件。
+兩個 Claude Code Skills，用於處理 PDF 和 PowerPoint 文件。
 
-## 📖 概述
+## 架構說明
 
-本項目包含：
+```
+使用者 → Claude Skill → FastAPI Web Service → 回傳文件內容 → Claude 進一步處理
+```
 
-1. **pdf-text-extractor** - 智能 PDF 文件提取與分析
-2. **pptx-content-extractor** - 智能 PowerPoint 簡報提取與分析
-
-### 核心功能
-
-無論是哪個 Skill，都能：
-- 🔖 **讀取文件** - 提取 PDF/PPTX 中的所有內容
-- 💭 **智能問答** - 基於文件內容回答您的問題（由 Claude AI 驅動）
-- 📄 **生成文件** - 根據分析結果生成新的 PDF/PPTX
+Skills 本身**不**在本地解析文件。文件內容的提取由 FastAPI Web Service 負責，Skill 透過 API 取得內容後，再由 Claude 進行分析、摘要、問答等工作。
 
 ---
 
-## 🚀 在 Claude 中使用 Skills
+## 包含的 Skills
 
-### 安裝 Skills 到 Claude
+### 1. pdf-text-extractor
 
-#### 步驟 1：找到 Skills 目錄
+讀取 PDF 文件，能夠：
+- 產生摘要
+- 修改/清理文件內容
+- 輸出為新的 PDF 文件
 
-在您的 Claude 安裝位置找到 Skills 目錄：
+### 2. pptx-content-extractor
 
-**Windows：**
-```
-%APPDATA%\Claude\plugins\cache\claude-plugins-official\skill-creator\unknown\skills\
-```
-
-**Mac/Linux：**
-```
-~/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/
-```
-
-#### 步驟 2：安裝 Skills
-
-將 `pdf-text-extractor` 和 `pptx-content-extractor` 文件夾複製到上述 Skills 目錄。
-
-#### 步驟 3：安裝依賴（Claude 會自動執行）
-
-當您首次使用 Skill 時，Claude 會自動檢測並安裝所需的 Python 包：
-
-- **pdf-text-extractor** 需要：
-  - `pdfplumber` - PDF 讀取
-  - `reportlab` - PDF 生成
-
-- **pptx-content-extractor** 需要：
-  - `python-pptx` - PPTX 讀寫
-
-### 設置 API Key
-
-Skills 需要 Anthropic API Key。在 Claude 中設置環境變數：
-
-```
-$env:ANTHROPIC_API_KEY = "your-api-key-here"
-```
+讀取 PowerPoint 簡報，能夠：
+- 產生摘要
+- 修改/清理投影片內容
+- 輸出為新的 PPTX 文件
 
 ---
 
-## 📚 使用 Skills
+## 部署 Web Service
 
-### pdf-text-extractor
+Skills 依賴一個 FastAPI Web Service 來提取文件內容，需要先啟動它。
 
-#### 功能
+### 安裝依賴
 
-✅ 讀取任意 PDF 文件並提取內容  
-✅ 根據 PDF 內容回答問題  
-✅ 生成摘要或分析報告為新 PDF  
-
-#### 使用方式
-
-直接在 Claude 中詢問：
-
-```
-"讀取我的 PDF 文件並總結主要內容"
-"根據這個 PDF，什麼是稀疏 MoE（Sparse MoE）？"
-"從這個 PDF 生成一份摘要 PDF"
+```bash
+pip install -r requirements.txt
 ```
 
-Claude 會自動：
-1. 提示您提供 PDF 文件的路徑
-2. 讀取並分析文件
-3. 提供答案或生成新文件
+### 啟動服務（本地）
 
-### pptx-content-extractor
-
-#### 功能
-
-✅ 讀取任意 PPTX 簡報並提取所有幻燈片內容  
-✅ 根據簡報內容回答問題  
-✅ 生成新簡報或摘要簡報  
-
-#### 使用方式
-
-直接在 Claude 中詢問：
-
-```
-"讀取我的 PowerPoint 簡報並提取關鍵要點"
-"根據這個簡報，主要的業務優勢是什麼？"
-"從這個簡報生成一份精簡版本"
+```bash
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Claude 會自動：
-1. 提示您提供 PPTX 文件的路徑
-2. 讀取所有幻燈片
-3. 提供答案或生成新文件
+### 部署到 Zeabur
 
----
+推送到 GitHub 後，在 Zeabur 連接倉庫即可自動部署（已包含 `Procfile`）。
 
-## 🧪 測試驗證
+### API 端點
 
-### pdf-text-extractor 測試結果
-
-✅ **所有測試通過** (3/3)
-
-| 測試 | 結果 | 詳情 |
+| 端點 | 方法 | 說明 |
 |------|------|------|
-| **Test 1: 讀取和提取** | ✅ PASSED | 29 頁，166,627 字符成功提取 |
-| **Test 2: 問答能力** | ✅ PASSED | Claude API 成功基於文件內容回答問題 |
-| **Test 3: PDF 生成** | ✅ PASSED | 成功生成 5 KB 摘要 PDF 文件 |
-
-**更新時間：** 2026-06-19  
-**測試數據：** A Survey on Mixture of Experts.pdf (29 頁，學術論文)
-
-### pptx-content-extractor 測試結果
-
-✅ **所有測試通過** (3/3)
-
-| 測試 | 結果 | 詳情 |
-|------|------|------|
-| **Test 1: 讀取和提取** | ✅ PASSED | 40 張幻燈片，7,713 字符成功提取 |
-| **Test 2: 問答能力** | ✅ PASSED | Claude API 成功基於簡報內容回答問題 |
-| **Test 3: PPTX 生成** | ✅ PASSED | 成功生成 38.5 KB 摘要簡報 |
-
-**更新時間：** 2026-06-19  
-**測試數據：** Selling the Premium in Freemium.pptx (40 張幻燈片，商業簡報)
+| `/extract-pdf` | POST | 上傳 PDF，回傳文字內容與 metadata |
+| `/extract-pptx` | POST | 上傳 PPTX，回傳投影片內容與 metadata |
 
 ---
 
-## 💡 使用案例
+## 使用 Skills
 
-### PDF Skill
+在 Claude Code 中直接描述需求即可：
 
-- 📖 分析學術論文並提取關鍵概念
-- 📊 從報告中提取數據和統計信息
-- 💼 理解商業文檔和合同條款
-- 🎓 學習和復習教科書內容
-- 📝 快速生成文檔摘要
+```
+"讀取 report.pdf 並產生 100 字摘要"
+"把 slides.pptx 的內容整理後輸出成新的簡報"
+"清理這份 PDF 的內容，移除特殊符號後存成新的 PDF"
+```
 
-### PPTX Skill
-
-- 🎤 理解演講主題和要點
-- 📈 分析商業或營銷簡報
-- 🎓 總結教學演示文稿
-- 💡 提取創意和想法
-- 📋 從簡報生成會議筆記
+**前置條件：**
+- FastAPI Web Service 需要在運行中
+- 若需要 Claude API 獨立呼叫（如執行測試），需設定 `ANTHROPIC_API_KEY`
 
 ---
 
-## ⚙️ 系統要求
+## 測試
 
-- **Python** 3.10 或更高
-- **Claude Code** 或 **Claude.ai** (支持 Skill)
-- **有效的 Anthropic API Key**
+### 執行測試
 
-## 📋 支援的文件格式
+```bash
+# PDF skill
+python3 pdf-text-extractor/run_tests.py "path/to/document.pdf"
 
-- **PDF**: 標準 PDF 文件
-- **PPTX**: Microsoft PowerPoint 2007 及以上版本
+# PPTX skill
+python3 pptx-content-extractor/run_tests.py "path/to/presentation.pptx"
+```
+
+### 測試項目
+
+兩個 Skill 各有 3 項測試：
+
+| 測試 | 說明 |
+|------|------|
+| Test 1 | 產生 100 字摘要（驗證 Skill 能讀到文件內容）|
+| Test 2 | 修改文件內容（驗證 Skill 能清理/編輯內容）|
+| Test 3 | 輸出檔案（驗證 Skill 能將結果存成 PDF/PPTX）|
+
+### 最新測試結果（2026-06-20）
+
+**pdf-text-extractor** — 測試資料：A Survey on Mixture of Experts.pdf（29 頁）
+
+| 測試 | 結果 |
+|------|------|
+| Test 1: 產生摘要 | ✅ PASSED（103 字）|
+| Test 2: 修改內容 | ✅ PASSED（166,172 → 164,432 字元）|
+| Test 3: 輸出 PDF | ✅ PASSED（3,396 bytes）|
+
+**pptx-content-extractor** — 測試資料：Selling the Premium in Freemium.pptx（40 張）
+
+| 測試 | 結果 |
+|------|------|
+| Test 1: 產生摘要 | ✅ PASSED（93 字）|
+| Test 2: 修改內容 | ✅ PASSED（提取 40 張投影片標題）|
+| Test 3: 輸出 PPTX | ✅ PASSED（31,525 bytes）|
 
 ---
 
-## 🎯 快速開始
+## License
 
-### 場景 1：第一次使用
-
-```
-您（在 Claude 中）: "我想用 pdf-text-extractor Skill 讀取一份 PDF"
-
-Claude: "我會幫您讀取 PDF。請提供 PDF 文件的完整路徑。"
-
-您: "C:/Users/MyName/Documents/research_paper.pdf"
-
-Claude: [自動安裝依賴] [讀取文件] [提供分析]
-```
-
-### 場景 2：回答基於文檔的問題
-
-```
-您: "基於我的 PDF，主要的研究成果是什麼？"
-
-Claude: [自動讀取您提供的文件] [分析內容] [提供基於文件的回答]
-```
-
-### 場景 3：生成新文件
-
-```
-您: "從這個 PowerPoint 生成一份精簡摘要簡報"
-
-Claude: [讀取簡報] [分析內容] [生成新 PPTX] [提供文件位置]
-```
-
----
-
-## 🔒 安全性
-
-- API Keys 通過環境變數安全管理
-- 文件處理完全本地化
-- 沒有數據永久存儲
-- 支持任意格式的 PDF 和 PPTX 文件（不限於示例文件）
-
----
-
-## 📝 授權
-
-MIT License
-
----
-
-## 需要幫助？
-
-如果 Skill 不工作：
-
-1. **檢查 API Key 是否已設置**
-   ```
-   $env:ANTHROPIC_API_KEY
-   ```
-
-2. **驗證文件路徑**
-   - 確保文件存在
-   - 使用完整路徑而非相對路徑
-
-3. **確認文件格式**
-   - PDF Skill：確保是 `.pdf` 格式
-   - PPTX Skill：確保是 `.pptx` 格式
-
-4. **檢查 Python 版本**
-   - 需要 Python 3.10 或更高
-
-如果問題持續，請在 Claude 中詢問，它會幫您診斷和解決問題。
+MIT

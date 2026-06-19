@@ -2,11 +2,13 @@
 """
 PDF Text Extractor Skill
 Extracts text from PDFs, answers questions about content, and generates new PDFs.
+Uses FastAPI backend for file processing.
 """
 
 import os
 import sys
 import json
+import requests
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
@@ -17,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 # Import dependencies (will be installed via requirements.txt)
 try:
-    import pdfplumber
     from reportlab.lib.pagesizes import letter, A4
     from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -28,59 +29,104 @@ except ImportError as e:
     sys.exit(1)
 
 
-class PDFReader:
-    """Handles PDF reading and text extraction."""
+class APIClient:
+    """Client for calling the FastAPI backend."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, api_url: str = None):
+        if api_url is None:
+            api_url = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+        self.api_url = api_url
+        self.extract_endpoint = f"{api_url}/extract-pdf"
+
+    def extract_pdf(self, file_path: str) -> Dict:
+        """Extract PDF content via API."""
+        try:
+            pdf_file = Path(file_path)
+            if not pdf_file.exists():
+                return {"status": "error", "message": f"File not found: {file_path}"}
+
+            if not pdf_file.suffix.lower() == ".pdf":
+                return {"status": "error", "message": "File must be a PDF"}
+
+            with open(pdf_file, "rb") as f:
+                files = {"file": (pdf_file.name, f, "application/pdf")}
+                response = requests.post(self.extract_endpoint, files=files, timeout=300)
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "status": "error",
+                    "message": f"API error: {response.status_code}",
+                    "detail": response.text
+                }
+        except requests.exceptions.ConnectionError:
+            return {
+                "status": "error",
+                "message": f"Cannot connect to API at {self.api_url}",
+                "hint": "Make sure the FastAPI server is running"
+            }
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def health_check(self) -> bool:
+        """Check if API is available."""
+        try:
+            response = requests.get(f"{self.api_url}/", timeout=5)
+            return response.status_code == 200
+        except:
+            return False
+
+
+class PDFReader:
+    """Handles PDF reading and text extraction via API."""
+
+    def __init__(self, file_path: str, api_url: str = None):
         """
         Initialize PDF reader.
 
         Args:
             file_path: Path to PDF file
+            api_url: URL of the FastAPI backend
         """
+        if api_url is None:
+            api_url = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
         self.file_path = Path(file_path)
-        self.pdf = None
+        self.api_client = APIClient(api_url)
         self.text_content = None
         self.metadata = None
+        self.api_response = None
 
     def read_pdf(self) -> Dict:
-        """Read PDF and extract basic information."""
+        """Read PDF and extract basic information via API."""
         try:
-            with pdfplumber.open(self.file_path) as pdf:
-                self.pdf = pdf
+            self.api_response = self.api_client.extract_pdf(str(self.file_path))
+
+            if self.api_response.get("status") == "success":
+                self.text_content = self.api_response.get("content", "")
                 self.metadata = {
-                    "filename": self.file_path.name,
-                    "pages": len(pdf.pages),
-                    "metadata": pdf.metadata,
+                    "filename": self.api_response.get("filename", ""),
+                    "pages": self.api_response.get("pages", 0),
                 }
-                self.text_content = self.extract_text()
                 return {
                     "status": "success",
-                    "filename": self.file_path.name,
-                    "pages": len(pdf.pages),
+                    "filename": self.api_response.get("filename", ""),
+                    "pages": self.api_response.get("pages", 0),
                     "text_length": len(self.text_content),
                 }
+            else:
+                error_msg = self.api_response.get("message", "Unknown error")
+                logger.error(f"Error reading PDF: {error_msg}")
+                return {"status": "error", "message": error_msg}
         except Exception as e:
             logger.error(f"Error reading PDF: {e}")
             return {"status": "error", "message": str(e)}
 
     def extract_text(self) -> str:
-        """Extract all text from PDF."""
-        if self.pdf is None:
-            try:
-                with pdfplumber.open(self.file_path) as pdf:
-                    self.pdf = pdf
-            except Exception as e:
-                logger.error(f"Error opening PDF: {e}")
-                return ""
-
-        text_parts = []
-        for page_num, page in enumerate(self.pdf.pages, 1):
-            text = page.extract_text()
-            if text:
-                text_parts.append(f"--- Page {page_num} ---\n{text}")
-
-        return "\n\n".join(text_parts)
+        """Get extracted text content."""
+        if self.text_content is None:
+            self.read_pdf()
+        return self.text_content or ""
 
     def extract_metadata(self) -> Dict:
         """Extract metadata from PDF."""
@@ -265,19 +311,33 @@ class PDFGenerator:
 # ============================================================================
 
 def read_and_extract(pdf_path: str) -> Dict:
-    """Read PDF and extract content."""
+    """Read PDF and extract content via API."""
     reader = PDFReader(pdf_path)
     result = reader.read_pdf()
 
-    if result["status"] == "success":
+    if result.get("status") == "success" and reader.text_content:
         return {
             "status": "success",
-            "filename": result["filename"],
-            "pages": result["pages"],
-            "text_length": result["text_length"],
+            "filename": result.get("filename"),
+            "pages": result.get("pages"),
+            "text_length": result.get("text_length"),
             "content_preview": reader.text_content[:500] + "..." if len(reader.text_content) > 500 else reader.text_content,
         }
-    return result
+    elif result.get("status") != "success":
+        return {
+            "status": "error",
+            "message": result.get("message", "Unknown error occurred"),
+            "filename": None,
+            "pages": None,
+            "text_length": None
+        }
+    else:
+        return {
+            "status": "error",
+            "message": "Failed to extract text from PDF",
+            "filename": result.get("filename"),
+            "pages": result.get("pages")
+        }
 
 
 def analyze_and_answer(pdf_path: str, question: str) -> str:

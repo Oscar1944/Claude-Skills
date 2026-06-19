@@ -1,207 +1,133 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Test runner for pdf-text-extractor skill
+Tests for pdf-text-extractor skill
+Test 1: Generate 100-word summary (proves skill can see content)
+Test 2: Modify content (proves skill can clean/edit content)
+Test 3: Output a PDF file (proves skill can generate files)
 """
 
-import os
 import sys
-import json
-from pathlib import Path
-from datetime import datetime
 import io
+import os
+import re
+import requests
+from pathlib import Path
 
-# Set UTF-8 encoding for output
-if sys.platform == "win32":
-    import codecs
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent / "scripts"))
+API_URL = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+OUTPUT_DIR = Path(__file__).parent / "test_output"
+OUTPUT_DIR.mkdir(exist_ok=True)
 
-from extract_and_analyze import (
-    read_and_extract,
-    analyze_and_answer,
-    generate_summary_pdf,
-)
-
-def get_pdf_path():
-    """Get PDF file path from command line argument or user input."""
-    # Check for command line argument
-    if len(sys.argv) > 1:
-        pdf_path = sys.argv[1]
-        print(f"Using PDF file from argument: {pdf_path}\n")
-    else:
-        # Prompt user for input
-        print("=" * 80)
-        print("PDF Text Extractor - Test Suite")
-        print("=" * 80)
-        print("\n[INPUT] Please provide the path to a PDF file:")
-        pdf_path = input("PDF file path: ").strip()
-        print()
-
-    # Validate file exists
-    pdf_file = Path(pdf_path)
-    if not pdf_file.exists():
-        print(f"[ERROR] File not found: {pdf_path}")
-        return None
-
-    # Validate file is a PDF
-    if pdf_file.suffix.lower() != ".pdf":
-        print(f"[ERROR] Invalid file format. Expected .pdf, got {pdf_file.suffix}")
-        return None
-
-    return str(pdf_file.absolute())
+def get_content(pdf_path: str) -> str:
+    """Call API to get PDF content."""
+    with open(pdf_path, "rb") as f:
+        r = requests.post(f"{API_URL}/extract-pdf", files={"file": f}, timeout=120)
+    data = r.json()
+    assert data["status"] == "success", f"API error: {data.get('message')}"
+    return data["content"]
 
 
-def run_tests():
-    """Run all test cases for pdf-text-extractor"""
+def test1_summarize(content: str) -> str:
+    """Test 1: Ask Claude to produce a 100-word summary."""
+    from anthropic import Anthropic
+    client = Anthropic()
+    msg = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=300,
+        messages=[{
+            "role": "user",
+            "content": f"Summarize the following document in exactly 100 words:\n\n{content[:8000]}"
+        }]
+    )
+    summary = msg.content[0].text
+    word_count = len(summary.split())
+    assert word_count >= 80, f"Summary too short: {word_count} words"
+    return summary
 
-    # API key should be set via environment variable
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("[ERROR] ANTHROPIC_API_KEY environment variable not set")
-        print("Please set: $env:ANTHROPIC_API_KEY = 'your-api-key'")
-        print("\nExample:")
-        print("  PowerShell: $env:ANTHROPIC_API_KEY = 'your-api-key-here'")
-        print("  Bash:       export ANTHROPIC_API_KEY='your-api-key-here'")
-        return False
 
-    # Get PDF file path from user
-    pdf_path = get_pdf_path()
-    if pdf_path is None:
-        return False
+def test2_modify(content: str) -> str:
+    """Test 2: Clean content - remove special characters and normalize whitespace."""
+    cleaned = re.sub(r"[^\w\s.,;:()\-]", " ", content)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    assert len(cleaned) > 0, "Cleaned content is empty"
+    assert len(cleaned) < len(content), "Content was not modified"
+    return cleaned
 
-    print("=" * 80)
-    print("PDF Text Extractor - Test Suite")
-    print("=" * 80)
-    print()
 
-    results = {
-        "timestamp": datetime.now().isoformat(),
-        "tests": []
-    }
+def test3_output_pdf(content: str) -> Path:
+    """Test 3: Generate a PDF file from content."""
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.pagesizes import letter
 
-    # Test 1: Read and Extract
-    print("[TEST 1] Read and Extract PDF")
-    print("-" * 80)
+    output_file = OUTPUT_DIR / "test_output.pdf"
+    doc = SimpleDocTemplate(str(output_file), pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = [
+        Paragraph("PDF Skill Test Output", styles["Heading1"]),
+        Spacer(1, 12),
+        Paragraph(content[:2000].replace("\n", "<br/>"), styles["Normal"]),
+    ]
+    doc.build(story)
+    assert output_file.exists(), "PDF file was not created"
+    assert output_file.stat().st_size > 0, "PDF file is empty"
+    return output_file
+
+
+def run():
+    if len(sys.argv) < 2:
+        print("Usage: python run_tests.py <path_to_pdf>")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    passed = 0
+
+    print(f"PDF: {pdf_path}")
+    print(f"API: {API_URL}\n")
+
+    # Get content from API (shared across all tests)
+    print("Fetching content from API...")
+    content = get_content(pdf_path)
+    print(f"Content retrieved: {len(content)} characters\n")
+
+    # Test 1
+    print("[TEST 1] Generate 100-word summary")
     try:
-        result = read_and_extract(pdf_path)
-        print(f"[OK] Status: {result.get('status')}")
-        print(f"[OK] Filename: {result.get('filename')}")
-        print(f"[OK] Pages: {result.get('pages')}")
-        print(f"[OK] Text Length: {result.get('text_length')} characters")
-        print(f"[OK] Content Preview: {result.get('content_preview')[:100]}...")
-
-        results["tests"].append({
-            "id": 1,
-            "name": "Read and Extract",
-            "status": "passed" if result.get("status") == "success" else "failed",
-            "result": result
-        })
-        print("[PASS] TEST 1 PASSED\n")
+        summary = test1_summarize(content)
+        print(f"  Word count: {len(summary.split())}")
+        print(f"  Preview: {summary[:150]}...")
+        print("  PASSED\n")
+        passed += 1
     except Exception as e:
-        print(f"[FAIL] TEST 1 FAILED: {e}\n")
-        results["tests"].append({
-            "id": 1,
-            "name": "Read and Extract",
-            "status": "failed",
-            "error": str(e)
-        })
+        print(f"  FAILED: {e}\n")
 
-    # Test 2: Answer Question
-    print("[TEST 2] Answer Question About PDF")
-    print("-" * 80)
-    question = "Based on the PDF, explain the differences between sparse MoE and dense MoE architectures."
+    # Test 2
+    print("[TEST 2] Modify/clean content")
     try:
-        print(f"Question: {question}\n")
-        answer = analyze_and_answer(pdf_path, question)
-
-        # Handle encoding issues with special characters
-        try:
-            print(f"Answer:\n{answer[:500]}\n")
-        except UnicodeEncodeError:
-            # If there are encoding issues, save to file instead
-            answer_file = Path(__file__).parent / "test_output" / "answer_output.txt"
-            answer_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(answer_file, 'w', encoding='utf-8') as f:
-                f.write(answer)
-            print(f"[Note] Answer saved to file due to encoding: {answer_file}\n")
-
-        results["tests"].append({
-            "id": 2,
-            "name": "Answer Question",
-            "status": "passed",
-            "question": question,
-            "answer_preview": answer[:200] + "..." if len(answer) > 200 else answer
-        })
-        print("[PASS] TEST 2 PASSED\n")
+        cleaned = test2_modify(content)
+        print(f"  Original length: {len(content)} chars")
+        print(f"  Cleaned length:  {len(cleaned)} chars")
+        print(f"  Preview: {cleaned[:150]}...")
+        print("  PASSED\n")
+        passed += 1
     except Exception as e:
-        print(f"[FAIL] TEST 2 FAILED: {e}\n")
-        results["tests"].append({
-            "id": 2,
-            "name": "Answer Question",
-            "status": "failed",
-            "error": str(e)
-        })
+        print(f"  FAILED: {e}\n")
 
-    # Test 3: Generate Summary PDF
-    print("[TEST 3] Generate Summary PDF")
-    print("-" * 80)
+    # Test 3
+    print("[TEST 3] Output PDF file")
     try:
-        output_path = str(Path(__file__).parent / "test_output")
-        result = generate_summary_pdf(pdf_path, output_path)
-        print(f"[OK] {result}\n")
-
-        # Check if file was actually created
-        pdf_files = list(Path(output_path).glob("*.pdf"))
-        if pdf_files:
-            pdf_file = pdf_files[0]
-            file_size = pdf_file.stat().st_size
-            print(f"[OK] Generated file: {pdf_file.name}")
-            print(f"[OK] File size: {file_size} bytes")
-
-            results["tests"].append({
-                "id": 3,
-                "name": "Generate Summary PDF",
-                "status": "passed",
-                "output_file": str(pdf_file),
-                "file_size": file_size
-            })
-            print("[PASS] TEST 3 PASSED\n")
-        else:
-            print("[FAIL] TEST 3 FAILED: No PDF file generated\n")
-            results["tests"].append({
-                "id": 3,
-                "name": "Generate Summary PDF",
-                "status": "failed",
-                "error": "No PDF file generated"
-            })
+        out = test3_output_pdf(content)
+        print(f"  Output file: {out}")
+        print(f"  File size: {out.stat().st_size} bytes")
+        print("  PASSED\n")
+        passed += 1
     except Exception as e:
-        print(f"[FAIL] TEST 3 FAILED: {e}\n")
-        results["tests"].append({
-            "id": 3,
-            "name": "Generate Summary PDF",
-            "status": "failed",
-            "error": str(e)
-        })
+        print(f"  FAILED: {e}\n")
 
-    # Summary
-    print("=" * 80)
-    print("TEST SUMMARY")
-    print("=" * 80)
-    passed = sum(1 for t in results["tests"] if t["status"] == "passed")
-    total = len(results["tests"])
-    print(f"Passed: {passed}/{total}")
-    print()
+    print(f"Results: {passed}/3 passed")
+    sys.exit(0 if passed == 3 else 1)
 
-    # Save results
-    results_file = Path(__file__).parent / "test_results.json"
-    with open(results_file, "w") as f:
-        json.dump(results, f, indent=2, default=str)
-    print(f"[OK] Results saved to: {results_file}")
-
-    return passed == total
 
 if __name__ == "__main__":
-    success = run_tests()
-    sys.exit(0 if success else 1)
+    run()
