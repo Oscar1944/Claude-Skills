@@ -2,13 +2,67 @@
 
 兩個 Claude Code Skills，用於處理 PDF 和 PowerPoint 文件。
 
+---
+
+## 🚀 Quick Start
+
+### 步驟 1：安裝 Skills
+
+將 `pdf-text-extractor` 和 `pptx-content-extractor` 兩個資料夾複製到 Claude Code 的 Skills 目錄：
+
+**Windows：**
+```
+%APPDATA%\Claude\plugins\cache\claude-plugins-official\skill-creator\unknown\skills\
+```
+
+**Mac/Linux：**
+```
+~/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/
+```
+
+### 步驟 2：安裝 Python 套件
+
+Skills 需要以下套件（用於問答及輸出文件）：
+
+```bash
+pip install anthropic reportlab python-pptx requests
+```
+
+### 步驟 3：設定 API Key
+
+```bash
+# Windows PowerShell
+$env:ANTHROPIC_API_KEY = "your-api-key-here"
+
+# Mac/Linux
+export ANTHROPIC_API_KEY="your-api-key-here"
+```
+
+### 步驟 4：開始使用
+
+在 Claude Code 中直接描述需求即可，例如：
+
+```
+讀取 report.pdf 並產生 100 字摘要
+```
+```
+把 slides.pptx 的內容整理後輸出成新的簡報
+```
+```
+清理這份 PDF 的內容，移除特殊符號後存成新的 PDF
+```
+
+> **不需要自己架設任何服務。** 文件內容提取由雲端 API（`https://claude-skill.zeabur.app`）處理，Skills 會自動呼叫。
+
+---
+
 ## 架構說明
 
 ```
 使用者 → Claude Skill → FastAPI Web Service → 回傳文件內容 → Claude 進一步處理
 ```
 
-Skills 本身**不**在本地解析文件。文件內容的提取由 FastAPI Web Service 負責，Skill 透過 API 取得內容後，再由 Claude 進行分析、摘要、問答等工作。
+Skills 本身**不**在本地解析文件。文件內容的提取由部署在 Zeabur 的 FastAPI Web Service 負責（`https://claude-skill.zeabur.app`），Skill 透過 API 取得內容後，再由 Claude 進行分析、摘要、問答等工作。
 
 ---
 
@@ -30,48 +84,16 @@ Skills 本身**不**在本地解析文件。文件內容的提取由 FastAPI Web
 
 ---
 
-## 部署 Web Service
+## Web Service
 
-Skills 依賴一個 FastAPI Web Service 來提取文件內容，需要先啟動它。
+文件內容提取由 FastAPI 服務處理，已部署於 `https://claude-skill.zeabur.app`。
 
-### 安裝依賴
+若需要自行部署，在 Zeabur 連接此 GitHub 倉庫即可自動建置（已包含 `Dockerfile`）。
 
-```bash
-pip install -r requirements.txt
-```
-
-### 啟動服務（本地）
-
-```bash
-uvicorn main:app --reload --host 127.0.0.1 --port 8000
-```
-
-### 部署到 Zeabur
-
-推送到 GitHub 後，在 Zeabur 連接倉庫即可自動部署（已包含 `Procfile`）。
-
-### API 端點
-
-| 端點 | 方法 | 說明 |
-|------|------|------|
-| `/extract-pdf` | POST | 上傳 PDF，回傳文字內容與 metadata |
-| `/extract-pptx` | POST | 上傳 PPTX，回傳投影片內容與 metadata |
-
----
-
-## 使用 Skills
-
-在 Claude Code 中直接描述需求即可：
-
-```
-"讀取 report.pdf 並產生 100 字摘要"
-"把 slides.pptx 的內容整理後輸出成新的簡報"
-"清理這份 PDF 的內容，移除特殊符號後存成新的 PDF"
-```
-
-**前置條件：**
-- FastAPI Web Service 需要在運行中
-- 若需要 Claude API 獨立呼叫（如執行測試），需設定 `ANTHROPIC_API_KEY`
+| 端點 | 說明 |
+|------|------|
+| `POST /extract-pdf` | 上傳 PDF，回傳文字內容與 metadata |
+| `POST /extract-pptx` | 上傳 PPTX，回傳投影片內容與 metadata |
 
 ---
 
