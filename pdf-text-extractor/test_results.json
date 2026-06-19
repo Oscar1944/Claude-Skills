@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-06-19T17:37:31.517509",
+  "tests": [
+    {
+      "id": 1,
+      "name": "Read and Extract",
+      "status": "passed",
+      "result": {
+        "status": "success",
+        "filename": "A Survey on Mixture of Experts.pdf",
+        "pages": 29,
+        "text_length": 166627,
+        "content_preview": "--- Page 1 ---\nJOURNALOFLATEXCLASSFILES,VOL.14,NO.8,AUGUST2015 1\nA Survey on Mixture of Experts\nWeilin Cai\u2217, Juyong Jiang\u2217, Fan Wang\u2217, Jing Tang, Sunghun Kim, Jiayi Huang\u2020\nAbstract\u2014Largelanguagemodels(LLMs)havegarneredunprecedentedadvancementsacrossdiversefields,rangingfromnatural\nlanguageprocessingtocomputervisionandbeyond.TheprowessofLLMsisunderpinnedbytheirsubstantialmodelsize,extensive\nanddiversedatasets,andthevastcomputationalpowerharnessedduringtraining,allofwhichcontributetotheemergentabi..."
+      }
+    },
+    {
+      "id": 2,
+      "name": "Answer Question",
+      "status": "failed",
+      "error": "'cp950' codec can't encode character '\\u2081' in position 349: illegal multibyte sequence"
+    },
+    {
+      "id": 3,
+      "name": "Generate Summary PDF",
+      "status": "passed",
+      "output_file": "C:\\Users\\USER\\Desktop\\VS Code file\\claude_project\\skills\\pdf-text-extractor\\test_output\\Summary_of_A_Survey_on_Mixture_of_Experts.pdf",
+      "file_size": 5177
+    }
+  ]
+}

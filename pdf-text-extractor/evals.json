@@ -1,0 +1,77 @@
+{
+  "skill_name": "pdf-text-extractor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Please read the PDF file 'A Survey on Mixture of Experts.pdf' and provide a comprehensive summary of its main content. What are the key concepts, methodologies, and applications discussed?",
+      "expected_output": "A detailed summary covering MoE architecture definition, gating functions, system design approaches, and applications in large language models",
+      "files": ["A Survey on Mixture of Experts.pdf"],
+      "assertions": [
+        {
+          "name": "contains_moe_definition",
+          "description": "Summary includes clear definition of Mixture of Experts"
+        },
+        {
+          "name": "mentions_gating_functions",
+          "description": "Discusses gating/routing mechanisms for expert selection"
+        },
+        {
+          "name": "covers_applications",
+          "description": "Mentions real-world applications in LLMs or other domains"
+        },
+        {
+          "name": "response_length",
+          "description": "Summary is substantial (at least 300 words) but concise"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Based on the PDF 'A Survey on Mixture of Experts.pdf', explain the differences between sparse MoE and dense MoE architectures. What are the trade-offs between them?",
+      "expected_output": "A detailed comparison explaining sparse vs dense MoE, including computational efficiency, expert utilization, and performance implications",
+      "files": ["A Survey on Mixture of Experts.pdf"],
+      "assertions": [
+        {
+          "name": "defines_sparse_moe",
+          "description": "Clearly explains what sparse MoE is"
+        },
+        {
+          "name": "defines_dense_moe",
+          "description": "Clearly explains what dense MoE is"
+        },
+        {
+          "name": "mentions_tradeoffs",
+          "description": "Discusses computational and performance trade-offs"
+        },
+        {
+          "name": "cites_paper_content",
+          "description": "References concepts/examples from the actual PDF content"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Extract the key takeaways from 'A Survey on Mixture of Experts.pdf' and generate a new PDF document containing these takeaways in a clean, formatted manner. The new PDF should be easy to reference.",
+      "expected_output": "A newly generated PDF file containing organized key takeaways from the survey",
+      "files": ["A Survey on Mixture of Experts.pdf"],
+      "assertions": [
+        {
+          "name": "pdf_generated",
+          "description": "A PDF file is successfully generated"
+        },
+        {
+          "name": "contains_key_points",
+          "description": "PDF includes key takeaways from the survey"
+        },
+        {
+          "name": "well_formatted",
+          "description": "PDF is well-structured with clear headings and organization"
+        },
+        {
+          "name": "readable",
+          "description": "Generated PDF is readable and professional-looking"
+        }
+      ]
+    }
+  ]
+}
