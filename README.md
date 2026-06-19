@@ -44,16 +44,16 @@ export ANTHROPIC_API_KEY="your-api-key-here"
 
 ### 步驟 4：開始使用
 
-在 Claude Code 中直接描述需求即可，例如：
+在 Claude Code 中使用 `/` 指定 skill，例如：
 
 ```
-讀取 report.pdf 並產生 100 字摘要
+/pdf-text-extractor 讀取 report.pdf 並產生 100 字摘要
 ```
 ```
-把 slides.pptx 的內容整理後輸出成新的簡報
+/pdf-text-extractor 清理這份 PDF 的內容，移除特殊符號後存成新的 PDF
 ```
 ```
-清理這份 PDF 的內容，移除特殊符號後存成新的 PDF
+/pptx-content-extractor 把 slides.pptx 的內容整理後輸出成新的簡報
 ```
 
 > **不需要自己架設任何服務。** 文件內容提取由雲端 API（`https://claude-skill.zeabur.app`）處理，Skills 會自動呼叫。
