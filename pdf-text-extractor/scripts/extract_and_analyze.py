@@ -34,7 +34,7 @@ class APIClient:
 
     def __init__(self, api_url: str = None):
         if api_url is None:
-            api_url = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+            api_url = os.getenv("PDF_EXTRACTION_API_URL", "https://claude-skill.zeabur.app")
         self.api_url = api_url
         self.extract_endpoint = f"{api_url}/extract-pdf"
 
@@ -90,7 +90,7 @@ class PDFReader:
             api_url: URL of the FastAPI backend
         """
         if api_url is None:
-            api_url = os.getenv("PDF_EXTRACTION_API_URL", "http://127.0.0.1:8000")
+            api_url = os.getenv("PDF_EXTRACTION_API_URL", "https://claude-skill.zeabur.app")
         self.file_path = Path(file_path)
         self.api_client = APIClient(api_url)
         self.text_content = None
