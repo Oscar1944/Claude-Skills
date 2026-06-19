@@ -22,7 +22,9 @@
 
 ### 步驟 2：安裝 Python 套件
 
-Skills 需要以下套件（用於問答及輸出文件）：
+Claude 會在首次使用 Skill 時自動安裝所需套件，無需手動操作。
+
+若需要手動安裝（如執行測試）：
 
 ```bash
 pip install anthropic reportlab python-pptx requests
