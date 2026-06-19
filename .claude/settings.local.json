@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\USER\\\\.claude\\\\plugins\\\\marketplaces\\\\anthropic-agent-skills\\\\skills\\\\algorithmic-art\\\\\" -Force -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object FullName | Format-Table -AutoSize)"
+    ]
+  }
+}
