@@ -20,6 +20,8 @@
 ~/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/
 ```
 
+複製完成後重新啟動 Claude Code，Skills 即生效。
+
 ### 步驟 2：安裝 Python 套件
 
 Claude 會在首次使用 Skill 時自動安裝所需套件，無需手動操作。
