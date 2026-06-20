@@ -24,59 +24,43 @@ Use this skill when you need to:
 - Analyze business presentations, academic talks, or reports
 - Generate new presentations based on content analysis
 
+## Inputs / Outputs
+
+| | Description |
+|---|---|
+| **Input** | `file_path` (str) — absolute path to the PPTX file |
+| **Input** | `task` (str) — what to do: summarize / clean / answer question / generate PPTX |
+| **Output** | `summary` (str) — generated summary text |
+| **Output** | `cleaned_text` (str) — cleaned slide content (e.g. titles only, no special chars) |
+| **Output** | `answer` (str) — answer to a specific question about the presentation |
+| **Output** | `output_file` (str) — absolute path to the generated PPTX file |
+
 ## Core Capabilities
 
 ### 1. PPTX Reading & Content Extraction
 
-The skill reads PPTX files and extracts all slide content, preserving structure and hierarchy. It captures:
-- Slide text and titles
-- Bullet points and notes
-- Slide numbers and sequence
-- Speaker notes if available
-- Basic slide metadata
+Retrieves full slide content from a PPTX via the extraction API. Returns per-slide text with slide numbers preserved.
 
-**Example workflow:**
-```
-User: "Read this PowerPoint and tell me what it's about"
-→ Skill reads PPTX
-→ Extracts all slides and content
-→ Uses AI to generate summary/analysis
-→ Returns structured information
-```
+### 2. Text Cleaning
 
-### 2. Content Analysis & Question Answering
+Cleans and normalizes extracted slide content:
+- Extract slide titles only
+- Remove special/non-printable characters
+- Normalize whitespace and formatting artifacts
 
-Once content is extracted, the skill uses AI language capabilities to:
+### 3. Content Analysis & Question Answering
+
+Uses AI to analyze extracted content and:
 - Answer specific questions based on presentation content
 - Provide summaries of key points
-- Extract key information from specific slides
-- Analyze presentation flow and structure
 - Identify main arguments or recommendations
 
-**Example workflow:**
-```
-User: "Based on the presentation, what are the main benefits of the freemium model?"
-→ Skill extracts PPTX content
-→ AI analyzes content in context
-→ Returns detailed answer based on presentation
-```
+### 4. PPTX Generation
 
-### 3. PPTX Generation
-
-The skill can create new PPTX files:
-- From analysis summaries
-- From extracted content reorganized
-- With user-specified content and structure
-- With professional formatting
-
-**Example workflow:**
-```
-User: "Create a new presentation summarizing the key points from this file"
-→ Skill analyzes PPTX
-→ Creates structured outline
-→ Generates new formatted PPTX
-→ Saves and returns path to generated PPTX
-```
+Generates a new PPTX file locally from any text content:
+- Title slide + content slides layout
+- Supports CJK (Chinese/Japanese/Korean) characters
+- Saved to user-specified output path
 
 ## How to Use
 
@@ -152,6 +136,13 @@ Process:
 Output:
 "Generated PPTX: /output/strategy-focus.pptx (2.5 MB, 8 slides)"
 ```
+
+## Safe Execution Boundary
+
+- **File access**: only reads the file path explicitly provided by the user — does not scan or access other directories
+- **Network**: only calls `https://claude-skill.zeabur.app` — no other external requests
+- **Output**: generated files are written only to the path specified by the user
+- **Data privacy**: document content is sent to the extraction API for processing and is not stored or logged
 
 ## Execution Rules
 

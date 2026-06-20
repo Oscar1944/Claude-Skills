@@ -24,58 +24,43 @@ Use this skill when you need to:
 - Analyze academic papers, reports, or documents
 - Generate new PDFs based on document analysis
 
+## Inputs / Outputs
+
+| | Description |
+|---|---|
+| **Input** | `file_path` (str) — absolute path to the PDF file |
+| **Input** | `task` (str) — what to do: summarize / clean / answer question / generate PDF |
+| **Output** | `summary` (str) — generated summary text |
+| **Output** | `cleaned_text` (str) — cleaned and normalized text content |
+| **Output** | `answer` (str) — answer to a specific question about the document |
+| **Output** | `output_file` (str) — absolute path to the generated PDF file |
+
 ## Core Capabilities
 
 ### 1. PDF Reading & Text Extraction
 
-The skill reads PDF files and extracts all text content, preserving structure where possible. It captures:
-- Main text content
-- Page numbers and metadata
-- Document structure (chapters, sections if detectable)
-- Character and word counts
+Retrieves full text content from a PDF via the extraction API. Returns raw text with page structure preserved.
 
-**Example workflow:**
-```
-User: "Read this PDF and tell me what it's about"
-→ Skill reads PDF
-→ Extracts text and structure
-→ Uses AI to generate summary/analysis
-→ Returns structured information
-```
+### 2. Text Cleaning
 
-### 2. Content Analysis & Question Answering
+Cleans and normalizes extracted text:
+- Remove special/non-printable characters
+- Normalize whitespace
+- Strip irrelevant formatting artifacts
 
-Once content is extracted, the skill uses AI language capabilities to:
-- Answer specific questions based on the PDF content
-- Provide summaries (full or targeted)
-- Extract key information
-- Analyze specific sections
-- Compare information across sections
+### 3. Content Analysis & Question Answering
 
-**Example workflow:**
-```
-User: "Based on the PDF, what are the main points about MoE architecture?"
-→ Skill extracts PDF content
-→ AI analyzes content in context
-→ Returns detailed answer based on document
-```
+Uses AI to analyze extracted content and:
+- Answer specific questions based on document content
+- Provide summaries (full or targeted length)
+- Extract key points or structured information
 
-### 3. PDF Generation
+### 4. PDF Generation
 
-The skill can create new PDF files:
-- From analysis summaries
-- From extracted sections
-- With reformatted content
-- With user-specified modifications
-
-**Example workflow:**
-```
-User: "Generate a PDF summary of this document"
-→ Skill analyzes PDF
-→ Creates structured summary
-→ Generates new PDF file
-→ Saves and returns path to generated PDF
-```
+Generates a new PDF file locally from any text content:
+- Supports CJK (Chinese/Japanese/Korean) characters
+- Formatted with title, headings, and body text
+- Saved to user-specified output path
 
 ## How to Use
 
@@ -150,6 +135,13 @@ Process:
 Output:
 "Generated PDF: /output/key-takeaways.pdf (1.2 MB, 3 pages)"
 ```
+
+## Safe Execution Boundary
+
+- **File access**: only reads the file path explicitly provided by the user — does not scan or access other directories
+- **Network**: only calls `https://claude-skill.zeabur.app` — no other external requests
+- **Output**: generated files are written only to the path specified by the user
+- **Data privacy**: document content is sent to the extraction API for processing and is not stored or logged
 
 ## Execution Rules
 
