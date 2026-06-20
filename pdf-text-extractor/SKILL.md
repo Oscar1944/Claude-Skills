@@ -153,6 +153,8 @@ Output:
 
 ## Execution Rules
 
+**IMPORTANT: You MUST retrieve file content by calling `extract_and_analyze.py` via the API. Do NOT use the Read tool, open(), pdfplumber, or any local method to access document content directly. All document content must come from the API response.**
+
 When running Python code as part of this skill:
 
 1. **Do NOT write Python scripts to disk.** Execute all Python inline via PowerShell here-string:
